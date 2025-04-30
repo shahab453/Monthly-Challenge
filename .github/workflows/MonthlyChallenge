@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <title>Monthly Challenge Tracker</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0px;
+            background-color: #222;
+        }
+
+        .tracker-header {
+            text-align: center;
+            background-color: #111;
+            color: #f2f2f2;
+            height: 50px;
+            padding: 30px;
+            margin-top: 0px;
+            border-bottom: 1px solid #666;
+            padding-bottom: 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .calendar {
+            margin: 20px;
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .day-box {
+            border: 1px solid #ccc;
+            padding: 10px;
+            color: #f2f2f2;
+            border-radius: 10px;
+            text-align: center;
+            background-color: #111;
+            transition: background-color 0.3s ease;
+            cursor: pointer;
+        }
+
+        .day-box input {
+            width: 80%;
+            padding: 20px;
+            margin-top: 5px;
+            background-color: #222;
+            border-radius: 10px;
+            border: 1px solid #666;
+            color: #f2f2f2;
+        }
+
+        .profit {
+            background-color: green !important;
+        }
+
+        .loss {
+            background-color: red !important;
+        }
+
+        #summary {
+            margin-top: 30px;
+            font-size: 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 2px solid #f2f2f2;
+            background: #111;
+            border-radius: 15px;
+            margin: 20px;
+            padding: 20px;
+            color: #f2f2f2;
+        }
+
+        .total-profit {
+            background: #83ee83;
+            padding: 10px;
+            border-radius: 15px;
+            width: 30%;
+            text-align: center !important;
+            color: #222;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .total-loss {
+            background: #ff5d5d;
+            padding: 10px;
+            border-radius: 15px;
+            width: 30%;
+            text-align: center !important;
+            color: #222;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .total-amount {
+            background: #83ee83;
+            padding: 10px;
+            border-radius: 15px;
+            width: 30%;
+            text-align: center !important;
+            color: #222;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .amount-positive {
+            background-color: green !important;
+        }
+
+        .amount-negative {
+            background-color: #b80000 !important;
+        }
+
+        .excel-icon {
+            font-size: 50px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            transition: font-size 0.5s ease-in-out;
+        }
+
+        .excel-icon:hover {
+            font-size: 60px;
+        }
+
+        h2 {
+            margin-top: 40px;
+        }
+
+        /* Mobile screens (up to 600px) */
+        @media (max-width: 600px) {
+            h2 {
+                font-size: 18px;
+            }
+
+            .excel-sheets-btns {
+                margin-bottom: 30px;
+            }
+
+            .tracker-header {
+                display: contents;
+            }
+
+            .calendar {
+                grid-template-columns: repeat(2, 1fr);
+                margin: 10px;
+            }
+
+            .day-box input {
+                width: 100%;
+                padding: 15px;
+            }
+
+            #summary {
+                flex-direction: column;
+                gap: 15px;
+                font-size: 1rem;
+            }
+
+            .total-profit,
+            .total-loss,
+            .total-amount {
+                width: 100%;
+            }
+        }
+
+        /* Tablet screens (601px to 1024px) */
+        @media (min-width: 601px) and (max-width: 1024px) {
+
+            .calendar {
+                grid-template-columns: repeat(4, 1fr);
+                margin: 15px;
+            }
+
+            .day-box input {
+                width: 90%;
+            }
+
+            #summary {
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+
+            .total-profit,
+            .total-loss,
+            .total-amount {
+                width: 45%;
+            }
+        }
+
+        /* Large screens (1025px and above) */
+        @media (min-width: 1025px) {
+            .calendar {
+                grid-template-columns: repeat(6, 1fr);
+            }
+
+            .total-profit,
+            .total-loss,
+            .total-amount {
+                width: 30%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="tracker-header">
+        <div>
+            <h2>30-Day Monthly Challenge</h2>
+        </div>
+        <div class="excel-sheets-btns">
+            <!-- Export Icon Button -->
+            <button class="excel-icon" onclick="exportToExcel()" title="Export to Excel">
+                📤
+            </button>
+
+            <!-- Import Icon Label & Hidden Input -->
+            <label class="excel-icon" for="fileInput" title="Import from Excel">
+                📥
+            </label>
+            <input type="file" id="fileInput" accept=".xlsx" onchange="handleFile()" style="display:none;" />
+        </div>
+
+    </div>
+    <div class="calendar" id="calendar">
+        <!-- Boxes will be inserted here -->
+    </div>
+
+    <div id="summary">
+        <div class="total-profit">
+            Total Profit: <strong id="total-profit">0</strong>
+        </div>
+        <div class="total-loss">
+            Total Loss: <strong id="total-loss">0</strong>
+        </div>
+        <div class="total-amount">
+            Net Amount: <strong id="total-amount">0</strong>
+        </div>
+    </div>
+
+    <script>
+        const daysInMonth = 30;
+        let dailyValues = Array(daysInMonth).fill(0);
+        const calendar = document.getElementById('calendar');
+
+        function createCalendar() {
+            for (let i = 0; i < daysInMonth; i++) {
+                const box = document.createElement('div');
+                box.className = 'day-box';
+                box.innerHTML = `
+              <div class="day-label">Day ${i + 1}</div>
+              <input type="number" class="amount-input" data-day="${i}" value="0" />
+            `;
+                calendar.appendChild(box);
+            }
+        }
+
+        calendar.addEventListener('input', (e) => {
+            const input = e.target;
+            if (input.classList.contains('amount-input')) {
+                const day = parseInt(input.dataset.day);
+                const value = parseFloat(input.value) || 0;
+                dailyValues[day] = value;
+
+                const box = input.closest('.day-box');
+                box.classList.remove('profit', 'loss');
+                if (value > 0) box.classList.add('profit');
+                else if (value < 0) box.classList.add('loss');
+
+                updateSummary();
+            }
+        });
+
+        function updateSummary() {
+            const profit = dailyValues.filter(val => val > 0).reduce((a, b) => a + b, 0);
+            const loss = dailyValues.filter(val => val < 0).reduce((a, b) => a + b, 0);
+            const net = dailyValues.reduce((a, b) => a + b, 0);
+
+            document.getElementById('total-profit').textContent = profit.toFixed(2);
+            document.getElementById('total-loss').textContent = loss.toFixed(2);
+            document.getElementById('total-amount').textContent = net.toFixed(2);
+        }
+
+        function exportToExcel() {
+            // Save latest to localStorage
+            localStorage.setItem('monthlyData', JSON.stringify(dailyValues));
+
+            const data = dailyValues.map((val, index) => ({
+                Day: `Day ${index + 1}`,
+                Value: val
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(data);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Monthly Challenge");
+            XLSX.writeFile(workbook, "monthly_challenge.xlsx");
+        }
+
+        function handleFile() {
+            importFromExcel(); // import and also save to localStorage
+        }
+
+        function importFromExcel() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const json = XLSX.utils.sheet_to_json(sheet);
+
+                json.forEach((item, index) => {
+                    const value = parseFloat(item.Value) || 0;
+                    dailyValues[index] = value;
+
+                    const input = document.querySelector(`input[data-day="${index}"]`);
+                    if (input) input.value = value;
+
+                    const box = input.closest('.day-box');
+                    box.classList.remove('profit', 'loss');
+                    if (value > 0) box.classList.add('profit');
+                    else if (value < 0) box.classList.add('loss');
+                });
+
+                // Save to localStorage for persistence
+                localStorage.setItem('monthlyData', JSON.stringify(dailyValues));
+
+                updateSummary();
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        function loadFromLocalStorage() {
+            const stored = localStorage.getItem('monthlyData');
+            if (stored) {
+                dailyValues = JSON.parse(stored);
+                dailyValues.forEach((val, index) => {
+                    const input = document.querySelector(`input[data-day="${index}"]`);
+                    if (input) input.value = val;
+
+                    const box = input.closest('.day-box');
+                    box.classList.remove('profit', 'loss');
+                    if (val > 0) box.classList.add('profit');
+                    else if (val < 0) box.classList.add('loss');
+                });
+
+                updateSummary();
+            }
+        }
+
+        // Initialize on load
+        createCalendar();
+        loadFromLocalStorage();
+        updateSummary();
+    </script>
+
+</body>
+
+</html>
